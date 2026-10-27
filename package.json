@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:gtm": "vite --config vite.config.gtm.ts",
     "build": "tsc --noEmit && vite build",
     "build:static-html": "tsc --noEmit && vite build --config vite.config.static-html.ts && node scripts/write-static-html-readme.mjs",
+    "build:static-gtm": "tsc --noEmit && vite build --config vite.config.static-gtm.ts && node scripts/write-static-gtm-readme.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@braze/web-sdk": "6.8.0",
+    "@braze/web-sdk": "^6.13.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.28.0"

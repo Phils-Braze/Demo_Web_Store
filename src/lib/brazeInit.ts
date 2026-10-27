@@ -204,13 +204,13 @@ export async function initBrazeForIdentifiedUser(
       rk !== lastBrazeInitRefreshKey;
 
     if (lastIdentifiedUserId === id && !sameUserRelogin) {
-      /* Still ask the SDK for fresh banners/cards — short-circuit skips the block below that normally refreshes. */
+      /* Still ask the SDK for fresh banners — short-circuit skips the block below. */
       try {
         const b = await import("@braze/web-sdk");
         if (b.isInitialized?.()) {
           exposeBrazeModuleForDevTools(b);
           b.requestBannersRefresh(ALL_BANNER_PLACEMENT_IDS);
-          b.requestContentCardsRefresh(() => dispatchCachedContentCardsDetail(b));
+          // [DUST TEST] b.requestContentCardsRefresh(() => dispatchCachedContentCardsDetail(b));
         }
       } catch {
         /* ignore */
@@ -260,13 +260,12 @@ export async function initBrazeForIdentifiedUser(
     registerInAppMessagesOnce(braze);
 
     braze.changeUser(id);
+    braze.openSession();
 
     await completeIdentifiedUserAfterChangeUser(id, initOptions);
 
     braze.requestBannersRefresh(ALL_BANNER_PLACEMENT_IDS);
-
-    /* Session is opened by the SDK as part of `changeUser` when the user id changes; no explicit `openSession()`. */
-    braze.requestContentCardsRefresh(() => dispatchCachedContentCardsDetail(braze));
+    // [DUST TEST] braze.requestContentCardsRefresh(() => dispatchCachedContentCardsDetail(braze));
     exposeBrazeModuleForDevTools(braze);
     lastIdentifiedUserId = id;
     lastBrazeInitRefreshKey = rk;

@@ -41,6 +41,31 @@ npm run build:static-html
 # Output located in: static-html-site/index.html
 ```
 
+### 5. Build Google Tag Manager Static Edition (Braze SDK Removed)
+Packages duplicate version with Google Tag Manager container `GTM-57Q85TXB` installed, Braze SDK completely removed, and ecommerce events instrumented to `window.dataLayer`.
+```bash
+npm run build:static-gtm
+# Output located in: static-html-site-gtm/index.html
+```
+
+To run GTM edition locally in dev server mode:
+```bash
+npm run dev:gtm
+```
+
+### 6. Deploy to Cloudflare (Workers Builds, Un-indexed)
+Both sites are configured with `_headers`, `robots.txt`, and `<meta name="robots" content="noindex, nofollow" />`.
+
+- **Site 1 (Braze Store)**:
+  Connect repo in Cloudflare dashboard (Workers & Pages → Create → Import a repository).
+  Uses default [`wrangler.jsonc`](wrangler.jsonc).
+  Deploy command: `npx wrangler deploy`
+
+- **Site 2 (GTM Store)**:
+  Connect same repo as a second Worker project in Cloudflare dashboard.
+  Uses [`wrangler.gtm.jsonc`](wrangler.gtm.jsonc).
+  Deploy command: `npx wrangler deploy --config wrangler.gtm.jsonc`
+
 ---
 
 ## 📖 How to Use the App

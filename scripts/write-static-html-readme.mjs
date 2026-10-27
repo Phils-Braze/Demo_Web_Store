@@ -27,3 +27,10 @@ Notes
 fs.mkdirSync(dir, { recursive: true });
 fs.writeFileSync(path.join(dir, "README.txt"), text, "utf8");
 console.log("Wrote static-html-site/README.txt");
+
+const root = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
+const headersSrc = path.join(root, "public", "_headers");
+const robotsSrc = path.join(root, "public", "robots.txt");
+if (fs.existsSync(headersSrc)) fs.copyFileSync(headersSrc, path.join(dir, "_headers"));
+if (fs.existsSync(robotsSrc)) fs.copyFileSync(robotsSrc, path.join(dir, "robots.txt"));
+

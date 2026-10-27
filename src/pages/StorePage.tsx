@@ -10,6 +10,7 @@ import {
   logViewedVipProducts,
 } from "../lib/brazeUserSyncWeb";
 import { isVip, subscribeSpendUpdated } from "../lib/purchaseStorage";
+import { isGtmMode, gtmTrackAddToCart, pushToDataLayer } from "../lib/gtm";
 
 const TAB_ALL = "ALL";
 const TAB_VIP = "VIP";
@@ -101,6 +102,9 @@ export function StorePage() {
 
   const selectCategory = (c: string) => {
     setCategory(c);
+    if (isGtmMode()) {
+      pushToDataLayer("select_item_list", { item_list_name: tabLabel(c) });
+    }
     if (c === TAB_VIP) void logViewedVipProducts();
   };
 
@@ -175,6 +179,9 @@ export function StorePage() {
                 className="btn btn-primary product-add"
                 onClick={() => {
                   addToCart(product);
+                  if (isGtmMode()) {
+                    gtmTrackAddToCart(product);
+                  }
                   if (currentUserId) void logAddedItemToCart(product);
                 }}
               >

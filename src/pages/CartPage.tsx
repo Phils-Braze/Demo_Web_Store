@@ -8,16 +8,28 @@ import {
 } from "../lib/brazeUserSyncWeb";
 import { recordPurchase, isVip } from "../lib/purchaseStorage";
 
+import { isGtmMode, gtmTrackPurchase, gtmTrackRemoveFromCart } from "../lib/gtm";
+
 export function CartPage() {
   const { items, itemCount, removeFromCart, clearCart, totalPrice } =
     useCart();
   const { currentUserId } = useProfile();
   const navigate = useNavigate();
 
+  const handleRemove = (product: (typeof items)[number]) => {
+    if (isGtmMode()) {
+      gtmTrackRemoveFromCart(product);
+    }
+    removeFromCart(product);
+  };
+
   const checkout = () => {
     if (!currentUserId || items.length === 0) return;
     const lineItems = [...items];
-    recordPurchase(currentUserId, lineItems);
+    const order = recordPurchase(currentUserId, lineItems);
+    if (isGtmMode()) {
+      gtmTrackPurchase(order.orderId, totalPrice, lineItems);
+    }
     void logCheckoutPurchases(lineItems);
     void syncVipStatusToBraze(currentUserId);
     clearCart();
@@ -47,7 +59,7 @@ export function CartPage() {
                 <button
                   type="button"
                   className="btn btn-ghost"
-                  onClick={() => removeFromCart(product)}
+                  onClick={() => handleRemove(product)}
                 >
                   Remove
                 </button>

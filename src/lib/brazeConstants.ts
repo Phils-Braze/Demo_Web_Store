@@ -3,7 +3,7 @@
  */
 
 /** Keep in sync with `package.json` → `dependencies["@braze/web-sdk"]`. */
-export const BRAZE_WEB_SDK_RANGE = "^6.3.1";
+export const BRAZE_WEB_SDK_RANGE = "^6.13.0";
 
 export const BANNER_PLACEMENTS = [
   { label: "Store page", id: "store_page_banner" },

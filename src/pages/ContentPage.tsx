@@ -30,8 +30,8 @@ export function ContentPage() {
     if (!currentUserId) return;
     void import("@braze/web-sdk").then((b) => {
       if (!b.isInitialized?.()) return;
-      const cc = b.getCachedContentCards();
-      if (!cc?.cards?.length) b.requestContentCardsRefresh();
+      // [DUST TEST] const cc = b.getCachedContentCards();
+      // [DUST TEST] if (!cc?.cards?.length) b.requestContentCardsRefresh();
     });
   }, [currentUserId, refreshKey]);
 

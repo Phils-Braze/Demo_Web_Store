@@ -20,6 +20,7 @@ import {
   getBrazeSettings,
   saveBrazeSettings,
 } from "../lib/brazeSettings";
+import { isGtmMode, pushToDataLayer, GTM_CONTAINER_ID } from "../lib/gtm";
 
 /*
   Braze (not shown in UI):
@@ -115,104 +116,151 @@ export function SettingsPage() {
       {toast ? <p className="settings-toast">{toast}</p> : null}
 
       <div className="settings-grid">
-        <section className="settings-card">
-          <h2>Braze credentials</h2>
-          <div className="stack tight">
-            <h3 className="settings-subh">Web SDK</h3>
-            <p className="product-meta">
-              Web app key and SDK endpoint (Manage Settings → Apps → Web). Android/REST-only keys often fail
-              initialization.
-            </p>
-            <div className="form-row">
-              <label htmlFor="bk">Web API key</label>
-              <input
-                id="bk"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-              />
-            </div>
-            <div className="form-row">
-              <label htmlFor="ep">SDK endpoint (hostname only)</label>
-              <input
-                id="ep"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                placeholder="sdk.xxx.braze.com"
-                spellCheck={false}
-              />
-            </div>
-            <div className="form-row form-row--checkbox">
-              <label className="settings-checkbox-label" htmlFor="allow-user-js">
+        {isGtmMode() ? (
+          <section className="settings-card">
+            <h2>Google Tag Manager</h2>
+            <div className="stack tight">
+              <h3 className="settings-subh">Container configuration</h3>
+              <p className="product-meta">
+                This store build runs with Google Tag Manager. Braze Web SDK is completely removed from the bundle.
+              </p>
+              <div className="form-row">
+                <label>Container ID</label>
+                <input value={GTM_CONTAINER_ID} readOnly spellCheck={false} />
+              </div>
+              <div className="form-row">
+                <label>Container script tags</label>
+                <input value="Installed (<head> script + <body> noscript)" readOnly />
+              </div>
+              <div className="form-row">
+                <label>dataLayer status</label>
                 <input
-                  id="allow-user-js"
-                  type="checkbox"
-                  checked={allowUserJsForLogin}
-                  onChange={(e) => {
-                    const on = e.target.checked;
-                    setAllowUserJsForLogin(on);
-                    setAllowUserSuppliedJavascriptForInit(on);
-                    pushLog({
-                      type: "info",
-                      message: `Web SDK init (Profile login): allowUserSuppliedJavascript = ${on}`,
-                    });
-                  }}
+                  value={
+                    typeof window !== "undefined" && window.dataLayer
+                      ? `Connected (${window.dataLayer.length} events recorded)`
+                      : "Active"
+                  }
+                  readOnly
                 />
-                <span>
-                  Allow user-supplied JavaScript in SDK init (default for Profile login)
-                </span>
-              </label>
-            </div>
-            <p className="product-meta">
-              Matches Braze <code>InitializationOptions.allowUserSuppliedJavascript</code>. Uncheck for stricter
-              Content Cards / HTML IAM behavior; the Braze sidebar “copy init” script uses this same setting.
-            </p>
+              </div>
 
-            <h3 className="settings-subh">REST API (profile import, optional)</h3>
-            <p className="product-meta">
-              Loads name, email, phone, and custom attributes into Profile via{" "}
-              <code>POST /users/export/ids</code>. Use a key with{" "}
-              <strong>users.export.ids</strong> — not the Web SDK key. REST base URL is in Braze API docs (e.g.{" "}
-              <code>https://todd.braze.com</code> for the Braze demo environment).
-            </p>
-            <p className="product-meta">
-              <strong>Local dev:</strong> <code>/braze-rest</code> proxies to{" "}
-              <code>https://todd.braze.com</code> by default; set <code>BRAZE_REST_PROXY_TARGET</code> in{" "}
-              <code>.env</code> to override. <strong>Production:</strong> browsers may block direct REST calls
-              without a same-origin proxy.
-            </p>
-            <div className="form-row">
-              <label htmlFor="brk">REST API key</label>
-              <input
-                id="brk"
-                value={restApiKey}
-                onChange={(e) => setRestApiKey(e.target.value)}
-                autoComplete="off"
-                spellCheck={false}
-              />
+              <div style={{ marginTop: "0.5rem" }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={() => {
+                    pushToDataLayer("gtm_test_event", {
+                      test_timestamp: new Date().toISOString(),
+                      message: "Manual test event from Settings page",
+                    });
+                    showToast("Test event pushed to window.dataLayer! View in Logs.");
+                  }}
+                >
+                  Push test event to dataLayer
+                </button>
+              </div>
             </div>
-            <div className="form-row">
-              <label htmlFor="re">REST instance URL</label>
-              <input
-                id="re"
-                value={restEndpoint}
-                onChange={(e) => setRestEndpoint(e.target.value)}
-                placeholder="https://todd.braze.com"
-                spellCheck={false}
-              />
-            </div>
+          </section>
+        ) : (
+          <section className="settings-card">
+            <h2>Braze credentials</h2>
+            <div className="stack tight">
+              <h3 className="settings-subh">Web SDK</h3>
+              <p className="product-meta">
+                Web app key and SDK endpoint (Manage Settings → Apps → Web). Android/REST-only keys often fail
+                initialization.
+              </p>
+              <div className="form-row">
+                <label htmlFor="bk">Web API key</label>
+                <input
+                  id="bk"
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="form-row">
+                <label htmlFor="ep">SDK endpoint (hostname only)</label>
+                <input
+                  id="ep"
+                  value={baseUrl}
+                  onChange={(e) => setBaseUrl(e.target.value)}
+                  placeholder="sdk.xxx.braze.com"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="form-row form-row--checkbox">
+                <label className="settings-checkbox-label" htmlFor="allow-user-js">
+                  <input
+                    id="allow-user-js"
+                    type="checkbox"
+                    checked={allowUserJsForLogin}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setAllowUserJsForLogin(on);
+                      setAllowUserSuppliedJavascriptForInit(on);
+                      pushLog({
+                        type: "info",
+                        message: `Web SDK init (Profile login): allowUserSuppliedJavascript = ${on}`,
+                      });
+                    }}
+                  />
+                  <span>
+                    Allow user-supplied JavaScript in SDK init (default for Profile login)
+                  </span>
+                </label>
+              </div>
+              <p className="product-meta">
+                Matches Braze <code>InitializationOptions.allowUserSuppliedJavascript</code>. Uncheck for stricter
+                Content Cards / HTML IAM behavior; the Braze sidebar “copy init” script uses this same setting.
+              </p>
 
-            <button
-              type="button"
-              className="btn btn-primary settings-save-creds"
-              disabled={saveBusy}
-              onClick={() => void saveCredentials()}
-            >
-              {saveBusy ? "Saving…" : "Save credentials"}
-            </button>
-          </div>
-        </section>
+              <h3 className="settings-subh">REST API (profile import, optional)</h3>
+              <p className="product-meta">
+                Loads name, email, phone, and custom attributes into Profile via{" "}
+                <code>POST /users/export/ids</code>. Use a key with{" "}
+                <strong>users.export.ids</strong> — not the Web SDK key. REST base URL is in Braze API docs (e.g.{" "}
+                <code>https://todd.braze.com</code> for the Braze demo environment).
+              </p>
+              <p className="product-meta">
+                <strong>Local dev:</strong> <code>/braze-rest</code> proxies to{" "}
+                <code>https://todd.braze.com</code> by default; set <code>BRAZE_REST_PROXY_TARGET</code> in{" "}
+                <code>.env</code> to override. <strong>Production:</strong> browsers may block direct REST calls
+                without a same-origin proxy.
+              </p>
+              <div className="form-row">
+                <label htmlFor="brk">REST API key</label>
+                <input
+                  id="brk"
+                  value={restApiKey}
+                  onChange={(e) => setRestApiKey(e.target.value)}
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+              <div className="form-row">
+                <label htmlFor="re">REST instance URL</label>
+                <input
+                  id="re"
+                  value={restEndpoint}
+                  onChange={(e) => setRestEndpoint(e.target.value)}
+                  placeholder="https://todd.braze.com"
+                  spellCheck={false}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-primary settings-save-creds"
+                disabled={saveBusy}
+                onClick={() => void saveCredentials()}
+              >
+                {saveBusy ? "Saving…" : "Save credentials"}
+              </button>
+            </div>
+          </section>
+        )}
 
         <section className="settings-card">
           <h2>Banner placement IDs</h2>

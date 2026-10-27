@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { BrazeLogEntry } from "../context/BrazeLogContext";
 import { useBrazeLogs } from "../context/BrazeLogContext";
+import { isGtmMode } from "../lib/gtm";
 
 /** Above this length, or any newline → collapsed by default until expanded. */
 const COLLAPSE_THRESHOLD = 200;
@@ -97,7 +98,11 @@ export function BrazeLogsPage() {
 
   return (
     <>
-      <h1 className="page-title">Braze SDK logs</h1>
+      <h1 className="page-title">
+        {isGtmMode()
+          ? "Google Tag Manager & DataLayer logs"
+          : "Braze SDK logs"}
+      </h1>
       <p style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
         <button type="button" className="btn btn-ghost" onClick={() => navigate(-1)}>
           ← Close

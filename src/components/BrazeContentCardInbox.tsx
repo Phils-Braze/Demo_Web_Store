@@ -182,9 +182,8 @@ export function BrazeContentCardInbox() {
   }, [visibleCards]);
 
   const onManualRefresh = () => {
-    void import("@braze/web-sdk").then((braze) => {
-      if (braze.isInitialized?.()) braze.requestContentCardsRefresh();
-    });
+    // [DUST TEST] Manual refresh disabled for pure DUST testing
+    console.info("[DUST TEST] Manual refresh clicked — requestContentCardsRefresh is disabled for pure DUST testing");
   };
 
   const openUrl = (card: Card, url: string) => {

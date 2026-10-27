@@ -48,7 +48,7 @@ export async function refreshBrazeBannersAndCards(): Promise<void> {
   const braze = await import("@braze/web-sdk");
   if (!braze.isInitialized?.()) return;
   braze.requestBannersRefresh(ALL_BANNER_PLACEMENT_IDS);
-  braze.requestContentCardsRefresh();
+  // [DUST TEST] braze.requestContentCardsRefresh();
 }
 
 export type CompleteIdentifiedUserOptions = {

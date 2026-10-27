@@ -1,0 +1,24 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "demo-store-braze",
+  "compatibility_date": "2026-10-27",
+  "assets": {
+    "directory": "./static-html-site",
+    "not_found_handling": "single-page-application"
+  },
+  "build": {
+    "command": "npm run build:static-html"
+  },
+  "env": {
+    "gtm": {
+      "name": "demo-store-gtm",
+      "assets": {
+        "directory": "./static-html-site-gtm",
+        "not_found_handling": "single-page-application"
+      },
+      "build": {
+        "command": "npm run build:static-gtm"
+      }
+    }
+  }
+}

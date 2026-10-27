@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AppLayout } from "./components/AppLayout";
 import { useBrazeLogs } from "./context/BrazeLogContext";
 import { useProfile } from "./context/ProfileContext";
@@ -20,6 +20,7 @@ import { SettingsPage } from "./pages/SettingsPage";
 import { StorePage } from "./pages/StorePage";
 import { ConsolePage } from "./pages/ConsolePage";
 import { DemostoreLinkInterceptor } from "./components/DemostoreLinkInterceptor";
+import { isGtmMode, gtmTrackPageView, gtmTrackLogin, gtmTrackLogout } from "./lib/gtm";
 
 
 function ThemeSync() {
@@ -33,9 +34,26 @@ function ThemeSync() {
   return null;
 }
 
+function GtmRouteSync() {
+  const location = useLocation();
+  const lastPath = useRef("");
+
+  useEffect(() => {
+    if (!isGtmMode()) return;
+    const current = location.pathname + location.search + location.hash;
+    if (lastPath.current !== current) {
+      lastPath.current = current;
+      gtmTrackPageView(current);
+    }
+  }, [location]);
+
+  return null;
+}
+
 /**
  * Delayed Braze setup: no SDK for anonymous visitors.
  * After login: `initialize` (if needed) → subscribe (IAM / content cards / banners) → `changeUser` (SDK opens session).
+ * In GTM mode: Braze SDK is bypassed and user changes trigger GTM dataLayer events.
  */
 function BrazeIdentifiedSync() {
   const { currentUserId, refreshKey } = useProfile();
@@ -49,6 +67,25 @@ function BrazeIdentifiedSync() {
   }, [pushLog]);
 
   useEffect(() => {
+    if (isGtmMode()) {
+      if (!introLogged.current) {
+        introLogged.current = true;
+        pushLog({
+          type: "info",
+          message:
+            "Google Tag Manager build active (Container GTM-57Q85TXB). Braze SDK completely removed. User & ecommerce events stream to window.dataLayer.",
+        });
+      }
+      if (currentUserId && prevUser.current !== currentUserId) {
+        gtmTrackLogin(currentUserId);
+        prevUser.current = currentUserId;
+      } else if (!currentUserId && prevUser.current !== null) {
+        gtmTrackLogout(prevUser.current);
+        prevUser.current = null;
+      }
+      return;
+    }
+
     if (currentUserId) {
       introLogged.current = true;
       const id = currentUserId;
@@ -104,6 +141,7 @@ function BrazeRestProfileImportSync() {
   const { pushLog } = useBrazeLogs();
 
   useEffect(() => {
+    if (isGtmMode()) return;
     if (!currentUserId) return;
     if (!isBrazeRestImportConfigured()) return;
     const ac = new AbortController();
@@ -144,6 +182,7 @@ export default function App() {
   return (
     <>
       <ThemeSync />
+      <GtmRouteSync />
       <BrazeIdentifiedSync />
       <BrazeRestProfileImportSync />
       <DemostoreLinkInterceptor />
