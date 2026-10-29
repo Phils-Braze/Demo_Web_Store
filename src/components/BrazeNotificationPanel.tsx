@@ -53,7 +53,7 @@ function readDismissible(card: Card): boolean {
 
 export function BrazeNotificationPanel({ isOpen, onClose }: Props) {
   const navigate = useNavigate();
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [cards, setCards] = useState<Card[]>([]);
   const [dismissedLocal, setDismissedLocal] = useState<Set<string>>(() => new Set());
   const impressionLogged = useRef<Set<string>>(new Set());
@@ -79,7 +79,7 @@ export function BrazeNotificationPanel({ isOpen, onClose }: Props) {
       return;
     }
     void refreshFromSdk();
-  }, [currentUserId, refreshKey, refreshFromSdk]);
+  }, [currentUserId, sessionId, refreshFromSdk]);
 
   useEffect(() => {
     void refreshFromSdk();

@@ -1,7 +1,11 @@
 import type { Product, PurchaseOrder } from "../types/product";
+import { createUserTable } from "./mockBackend";
 import { STORAGE } from "./storageKeys";
 
 const SPEND_UPDATED = "phil-store:spend-updated";
+
+const purchaseTable = createUserTable<PurchaseOrder[]>(STORAGE.purchases);
+const brazeRevenueTable = createUserTable<number>(STORAGE.brazeTotalRevenueByUser);
 
 function dispatchSpendUpdated(userId: string) {
   window.dispatchEvent(
@@ -20,39 +24,9 @@ export function subscribeSpendUpdated(
   return () => window.removeEventListener(SPEND_UPDATED, listener);
 }
 
-function loadMap(): Record<string, PurchaseOrder[]> {
-  try {
-    const raw = localStorage.getItem(STORAGE.purchases);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, PurchaseOrder[]>;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveMap(map: Record<string, PurchaseOrder[]>) {
-  localStorage.setItem(STORAGE.purchases, JSON.stringify(map));
-}
-
-function loadBrazeRevenueMap(): Record<string, number> {
-  try {
-    const raw = localStorage.getItem(STORAGE.brazeTotalRevenueByUser);
-    if (!raw) return {};
-    const parsed = JSON.parse(raw) as Record<string, number>;
-    return parsed && typeof parsed === "object" ? parsed : {};
-  } catch {
-    return {};
-  }
-}
-
-function saveBrazeRevenueMap(map: Record<string, number>) {
-  localStorage.setItem(STORAGE.brazeTotalRevenueByUser, JSON.stringify(map));
-}
-
 /** Latest Braze REST `total_revenue` seen for this user (USD). */
 export function getCachedBrazeTotalRevenue(userId: string): number {
-  const v = loadBrazeRevenueMap()[userId];
+  const v = brazeRevenueTable.get(userId);
   return typeof v === "number" && Number.isFinite(v) ? v : 0;
 }
 
@@ -62,20 +36,18 @@ export function getCachedBrazeTotalRevenue(userId: string): number {
  */
 export function applyBrazeTotalRevenue(userId: string, totalRevenueUsd: number): void {
   if (!userId.trim() || !Number.isFinite(totalRevenueUsd) || totalRevenueUsd < 0) return;
-  const map = loadBrazeRevenueMap();
-  const prev = map[userId] ?? 0;
-  map[userId] = Math.max(prev, totalRevenueUsd);
-  saveBrazeRevenueMap(map);
+  brazeRevenueTable.set(
+    userId,
+    Math.max(getCachedBrazeTotalRevenue(userId), totalRevenueUsd),
+  );
   dispatchSpendUpdated(userId);
 }
 
 export function getPurchaseHistory(userId: string): PurchaseOrder[] {
-  return loadMap()[userId] ?? [];
+  return purchaseTable.get(userId) ?? [];
 }
 
 export function recordPurchase(userId: string, products: Product[]): PurchaseOrder {
-  const map = loadMap();
-  const list = map[userId] ?? [];
   const order: PurchaseOrder = {
     orderId: crypto.randomUUID(),
     userId,
@@ -83,9 +55,7 @@ export function recordPurchase(userId: string, products: Product[]): PurchaseOrd
     products: [...products],
     totalAmount: products.reduce((s, p) => s + p.price, 0),
   };
-  list.push(order);
-  map[userId] = list;
-  saveMap(map);
+  purchaseTable.set(userId, [...getPurchaseHistory(userId), order]);
   dispatchSpendUpdated(userId);
   return order;
 }

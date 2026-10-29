@@ -21,11 +21,11 @@ const contentBannerPlacements = BANNER_PLACEMENTS.filter(
  * Demo actions at top; Banners; placement Content card slots; then full inbox + default Braze feed at bottom.
  */
 export function ContentPage() {
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [toast, setToast] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  /* Re-run on login/logout/user switch (`refreshKey`): first paint may have an empty cache before the new user’s feed returns. */
+  /* Re-run on login/logout/user switch (`sessionId`): first paint may have an empty cache before the new user’s feed returns. */
   useEffect(() => {
     if (!currentUserId) return;
     void import("@braze/web-sdk").then((b) => {
@@ -33,7 +33,7 @@ export function ContentPage() {
       // [DUST TEST] const cc = b.getCachedContentCards();
       // [DUST TEST] if (!cc?.cards?.length) b.requestContentCardsRefresh();
     });
-  }, [currentUserId, refreshKey]);
+  }, [currentUserId, sessionId]);
 
   useEffect(() => {
     if (!toast) return;

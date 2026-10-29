@@ -17,7 +17,7 @@ const TAB_VIP = "VIP";
 
 export function StorePage() {
   const { addToCart } = useCart();
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [searchParams] = useSearchParams();
   const [category, setCategory] = useState<string>(TAB_ALL);
   const [vipFeatureEnabled, setVipFeatureEnabled] = useState(true);
@@ -72,7 +72,7 @@ export function StorePage() {
       window.removeEventListener("braze:identified-ready", onReady);
       unsubSpend();
     };
-  }, [currentUserId, refreshKey]);
+  }, [currentUserId, sessionId]);
 
   useEffect(() => {
     if (category === TAB_VIP && !vipFeatureEnabled) {

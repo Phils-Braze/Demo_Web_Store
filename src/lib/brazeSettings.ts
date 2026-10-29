@@ -1,9 +1,5 @@
-const KEYS = {
-  apiKey: "braze_api_key",
-  baseUrl: "braze_sdk_endpoint",
-  restApiKey: "braze_rest_api_key",
-  restEndpoint: "braze_rest_endpoint",
-} as const;
+import { readString, writeString } from "./storage";
+import { STORAGE } from "./storageKeys";
 
 export type BrazeSettings = {
   apiKey: string;
@@ -16,18 +12,18 @@ export type BrazeSettings = {
 
 export function getBrazeSettings(): BrazeSettings {
   return {
-    apiKey: localStorage.getItem(KEYS.apiKey) ?? "",
-    baseUrl: localStorage.getItem(KEYS.baseUrl) ?? "",
-    restApiKey: localStorage.getItem(KEYS.restApiKey) ?? "",
-    restEndpoint: localStorage.getItem(KEYS.restEndpoint) ?? "",
+    apiKey: readString(STORAGE.brazeApiKey) ?? "",
+    baseUrl: readString(STORAGE.brazeSdkEndpoint) ?? "",
+    restApiKey: readString(STORAGE.brazeRestApiKey) ?? "",
+    restEndpoint: readString(STORAGE.brazeRestEndpoint) ?? "",
   };
 }
 
 export function saveBrazeSettings(settings: BrazeSettings): void {
-  localStorage.setItem(KEYS.apiKey, settings.apiKey);
-  localStorage.setItem(KEYS.baseUrl, settings.baseUrl);
-  localStorage.setItem(KEYS.restApiKey, settings.restApiKey);
-  localStorage.setItem(KEYS.restEndpoint, settings.restEndpoint);
+  writeString(STORAGE.brazeApiKey, settings.apiKey);
+  writeString(STORAGE.brazeSdkEndpoint, settings.baseUrl);
+  writeString(STORAGE.brazeRestApiKey, settings.restApiKey);
+  writeString(STORAGE.brazeRestEndpoint, settings.restEndpoint);
 }
 
 /**

@@ -2,27 +2,15 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
 import type { Product } from "../types/product";
-import { STORAGE } from "../lib/storageKeys";
-
-function loadCart(): Product[] {
-  try {
-    const raw = localStorage.getItem(STORAGE.cartItems);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw) as Product[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveCart(items: Product[]) {
-  localStorage.setItem(STORAGE.cartItems, JSON.stringify(items));
-}
+import { carts } from "../lib/mockBackend";
+import { useProfile } from "./ProfileContext";
 
 type CartContextValue = {
   items: Product[];
@@ -35,13 +23,45 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
+/**
+ * Logged in: the cart is saved to the mock backend per user and reloaded on login.
+ * Logged out: the cart lives in memory only, and merges into the user's cart on an explicit login.
+ */
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<Product[]>(() => loadCart());
+  const { currentUserId, loginKind } = useProfile();
+  const [items, setItems] = useState<Product[]>(() =>
+    currentUserId ? carts.get(currentUserId) : [],
+  );
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const prevUserId = useRef(currentUserId);
 
-  const persist = useCallback((next: Product[]) => {
-    setItems(next);
-    saveCart(next);
-  }, []);
+  useEffect(() => {
+    const prev = prevUserId.current;
+    if (prev === currentUserId) return;
+    prevUserId.current = currentUserId;
+
+    if (!currentUserId) {
+      setItems([]);
+      return;
+    }
+    const stored = carts.get(currentUserId);
+    if (prev === null && loginKind === "login") {
+      const merged = [...stored, ...itemsRef.current];
+      carts.save(currentUserId, merged);
+      setItems(merged);
+      return;
+    }
+    setItems(stored);
+  }, [currentUserId, loginKind]);
+
+  const persist = useCallback(
+    (next: Product[]) => {
+      setItems(next);
+      if (currentUserId) carts.save(currentUserId, next);
+    },
+    [currentUserId],
+  );
 
   const addToCart = useCallback(
     (product: Product) => {

@@ -66,7 +66,7 @@ function syncCardsFromSdk(braze: BrazeModule): Card[] {
  */
 export function BrazeContentCardInbox() {
   const navigate = useNavigate();
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [cards, setCards] = useState<Card[]>([]);
   const [unviewed, setUnviewed] = useState(0);
   const [dismissedExtra, setDismissedExtra] = useState<Set<string>>(() => new Set());
@@ -95,7 +95,7 @@ export function BrazeContentCardInbox() {
       return;
     }
     void refreshFromSdk();
-  }, [currentUserId, refreshKey, refreshFromSdk]);
+  }, [currentUserId, sessionId, refreshFromSdk]);
 
   useEffect(() => {
     void refreshFromSdk();

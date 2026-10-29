@@ -10,8 +10,8 @@ import {
 } from "./brazeUserSyncWeb";
 
 let lastIdentifiedUserId: string | null = null;
-/** Last `refreshKey` we ran init with (Profile login bumps key even when user id unchanged). */
-let lastBrazeInitRefreshKey: number | null = null;
+/** Last `sessionId` we ran init with (a new login changes it even when the user id is unchanged). */
+let lastBrazeInitSessionId: string | null = null;
 let brazeSubscriptionsRegistered = false;
 let inAppMessageHandlerRegistered = false;
 
@@ -164,13 +164,13 @@ function registerInAppMessagesOnce(braze: typeof import("@braze/web-sdk")) {
  * session when `changeUser` applies a new user id (see Web SDK request controller). Then
  * `requestBannersRefresh` / `requestContentCardsRefresh` for feeds after identification.
  *
- * @param refreshKey Profile `refreshKey` — increments on every Log in / Log out; resets to 0 on full page load.
- * @param initOptions Optional; set `logLoginEvent: true` only when init is due to Profile **Log in** this session
- *   (e.g. `refreshKey > 0`). Session restore after refresh and Settings reconnect should use `logLoginEvent: false`.
+ * @param sessionId Profile `sessionId` — new on every Log in, stable across page refresh.
+ * @param initOptions Optional; set `logLoginEvent: true` only when init is due to an explicit Profile **Log in**
+ *   (`loginKind === "login"`). Session restore after refresh and Settings reconnect should use `logLoginEvent: false`.
  */
 export async function initBrazeForIdentifiedUser(
   userId: string,
-  refreshKey?: number,
+  sessionId?: string | null,
   initOptions?: CompleteIdentifiedUserOptions,
 ): Promise<BrazeIdentifiedInitResult> {
   const id = userId.trim();
@@ -197,11 +197,11 @@ export async function initBrazeForIdentifiedUser(
   }
 
   try {
-    const rk = refreshKey ?? 0;
+    const sid = sessionId ?? "";
     const sameUserRelogin =
       lastIdentifiedUserId === id &&
-      lastBrazeInitRefreshKey !== null &&
-      rk !== lastBrazeInitRefreshKey;
+      lastBrazeInitSessionId !== null &&
+      sid !== lastBrazeInitSessionId;
 
     if (lastIdentifiedUserId === id && !sameUserRelogin) {
       /* Still ask the SDK for fresh banners — short-circuit skips the block below. */
@@ -227,7 +227,7 @@ export async function initBrazeForIdentifiedUser(
       }
       clearBrazeModuleFromDevTools();
       lastIdentifiedUserId = null;
-      lastBrazeInitRefreshKey = null;
+      lastBrazeInitSessionId = null;
       resetBrazeSdkHookRegistrationState();
     }
 
@@ -268,7 +268,7 @@ export async function initBrazeForIdentifiedUser(
     // [DUST TEST] braze.requestContentCardsRefresh(() => dispatchCachedContentCardsDetail(braze));
     exposeBrazeModuleForDevTools(braze);
     lastIdentifiedUserId = id;
-    lastBrazeInitRefreshKey = rk;
+    lastBrazeInitSessionId = sid;
     return { success: true };
   } catch (e) {
     const detail = errMsg(e);
@@ -297,7 +297,7 @@ export async function brazeOnLogout(previousUserId: string | null): Promise<void
   } finally {
     clearBrazeModuleFromDevTools();
     lastIdentifiedUserId = null;
-    lastBrazeInitRefreshKey = null;
+    lastBrazeInitSessionId = null;
     resetBrazeSdkHookRegistrationState();
   }
 }
@@ -316,7 +316,7 @@ export async function brazeDestroyForReconnect(): Promise<void> {
   } finally {
     clearBrazeModuleFromDevTools();
     lastIdentifiedUserId = null;
-    lastBrazeInitRefreshKey = null;
+    lastBrazeInitSessionId = null;
     resetBrazeSdkHookRegistrationState();
   }
 }

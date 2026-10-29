@@ -6,7 +6,10 @@ import { ErrorBoundary } from "./components/ErrorBoundary";
 import { BrazeLogProvider } from "./context/BrazeLogContext";
 import { CartProvider } from "./context/CartContext";
 import { ProfileProvider } from "./context/ProfileContext";
+import { migrateStorage } from "./lib/storageMigration";
 import "./index.css";
+
+migrateStorage();
 
 const rawBase = import.meta.env.BASE_URL;
 const routerBasename =

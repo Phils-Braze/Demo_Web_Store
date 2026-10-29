@@ -51,7 +51,7 @@ function cardUrl(card: Card): string | undefined {
  */
 export function BrazeContentCardSlot({ title, slotId, hint, variant }: Props) {
   const navigate = useNavigate();
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [card, setCard] = useState<Card | null>(null);
   const impressionLogged = useRef<Set<string>>(new Set());
   const articleRef = useRef<HTMLElement | null>(null);
@@ -74,7 +74,7 @@ export function BrazeContentCardSlot({ title, slotId, hint, variant }: Props) {
       return;
     }
     void sync();
-  }, [currentUserId, refreshKey, sync]);
+  }, [currentUserId, sessionId, sync]);
 
   useEffect(() => {
     void sync();

@@ -40,7 +40,7 @@ function copyValue(value: string, label: string) {
 export function SettingsPage() {
   const navigate = useNavigate();
   const { pushLog } = useBrazeLogs();
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId } = useProfile();
   const [apiKey, setApiKey] = useState(() => getBrazeSettings().apiKey);
   const [baseUrl, setBaseUrl] = useState(() => getBrazeSettings().baseUrl);
   const [restApiKey, setRestApiKey] = useState(
@@ -68,7 +68,7 @@ export function SettingsPage() {
         saveBrazeSettings({ apiKey, baseUrl, restApiKey, restEndpoint });
         const result = await initBrazeForIdentifiedUser(
           currentUserId,
-          refreshKey,
+          sessionId,
           { logLoginEvent: false },
         );
         if (result.success) {

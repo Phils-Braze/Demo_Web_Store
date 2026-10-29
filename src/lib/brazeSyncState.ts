@@ -1,3 +1,4 @@
+import { createUserTable } from "./mockBackend";
 import { STORAGE } from "./storageKeys";
 
 export type BrazeLastSentValues = {
@@ -24,33 +25,17 @@ function empty(): BrazeLastSentValues {
   };
 }
 
+const lastSentTable = createUserTable<Partial<BrazeLastSentValues>>(
+  STORAGE.brazeLastSent,
+);
+
 export function loadBrazeLastSent(userId: string): BrazeLastSentValues {
-  try {
-    const raw = localStorage.getItem(STORAGE.brazeLastSent);
-    if (!raw) return empty();
-    const all = JSON.parse(raw) as Record<string, Partial<BrazeLastSentValues>>;
-    const row = all[userId];
-    if (!row) return empty();
-    return { ...empty(), ...row };
-  } catch {
-    return empty();
-  }
+  return { ...empty(), ...lastSentTable.get(userId) };
 }
 
 export function mergeBrazeLastSent(
   userId: string,
   patch: Partial<BrazeLastSentValues>,
 ): void {
-  const cur = loadBrazeLastSent(userId);
-  const next = { ...cur, ...patch };
-  try {
-    const raw = localStorage.getItem(STORAGE.brazeLastSent);
-    const all = raw
-      ? (JSON.parse(raw) as Record<string, BrazeLastSentValues>)
-      : {};
-    all[userId] = next;
-    localStorage.setItem(STORAGE.brazeLastSent, JSON.stringify(all));
-  } catch {
-    /* ignore quota / parse */
-  }
+  lastSentTable.set(userId, { ...loadBrazeLastSent(userId), ...patch });
 }

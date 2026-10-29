@@ -56,10 +56,11 @@ function GtmRouteSync() {
  * In GTM mode: Braze SDK is bypassed and user changes trigger GTM dataLayer events.
  */
 function BrazeIdentifiedSync() {
-  const { currentUserId, refreshKey } = useProfile();
+  const { currentUserId, sessionId, loginKind } = useProfile();
   const { pushLog } = useBrazeLogs();
   const introLogged = useRef(false);
   const prevUser = useRef<string | null>(null);
+  const prevSession = useRef<string | null>(null);
 
   useEffect(() => {
     registerBrazeAppLogSink(pushLog);
@@ -76,11 +77,14 @@ function BrazeIdentifiedSync() {
             "Google Tag Manager build active (Container GTM-57Q85TXB). Braze SDK completely removed. User & ecommerce events stream to window.dataLayer.",
         });
       }
-      if (currentUserId && prevUser.current !== currentUserId) {
-        gtmTrackLogin(currentUserId);
+      if (currentUserId && prevSession.current !== sessionId) {
+        /* Resuming a stored session (refresh, other tab) is silent; only an explicit Log in click fires `login`. */
+        if (loginKind === "login") gtmTrackLogin(currentUserId);
+        prevSession.current = sessionId;
         prevUser.current = currentUserId;
       } else if (!currentUserId && prevUser.current !== null) {
         gtmTrackLogout(prevUser.current);
+        prevSession.current = null;
         prevUser.current = null;
       }
       return;
@@ -89,9 +93,9 @@ function BrazeIdentifiedSync() {
     if (currentUserId) {
       introLogged.current = true;
       const id = currentUserId;
-      void initBrazeForIdentifiedUser(id, refreshKey, {
-        /* `refreshKey` resets to 0 on page load — only >0 after an in-app login/logout cycle, so not on session restore. */
-        logLoginEvent: refreshKey > 0,
+      void initBrazeForIdentifiedUser(id, sessionId, {
+        /* Only an explicit Log in click logs `logged_in`; a resumed session (refresh, other tab) does not. */
+        logLoginEvent: loginKind === "login",
       }).then((result) => {
         if (result.success) {
           pushLog({
@@ -130,14 +134,14 @@ function BrazeIdentifiedSync() {
           "Braze Web SDK runs only after you log in with a user ID. Add credentials in Settings, then use Profile → Log in.",
       });
     }
-  }, [currentUserId, refreshKey, pushLog]);
+  }, [currentUserId, sessionId, loginKind, pushLog]);
 
   return null;
 }
 
 /** Pull profile + Braze `total_revenue` on login (not tied to Profile route). */
 function BrazeRestProfileImportSync() {
-  const { currentUserId, refreshKey, updateProfile } = useProfile();
+  const { currentUserId, sessionId, updateProfile } = useProfile();
   const { pushLog } = useBrazeLogs();
 
   useEffect(() => {
@@ -173,7 +177,7 @@ function BrazeRestProfileImportSync() {
       });
     })();
     return () => ac.abort();
-  }, [currentUserId, refreshKey, pushLog, updateProfile]);
+  }, [currentUserId, sessionId, pushLog, updateProfile]);
 
   return null;
 }

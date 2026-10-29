@@ -54,7 +54,7 @@ export async function refreshBrazeBannersAndCards(): Promise<void> {
 export type CompleteIdentifiedUserOptions = {
   /**
    * When true, sends `logCustomEvent("logged_in")` after `changeUser`.
-   * Use only for an explicit Profile login in this SPA session (`refreshKey > 0` after `login()`);
+   * Use only for an explicit Profile login in this SPA session (`loginKind === "login"`);
    * omit or false for session restore (page refresh) or Settings → reconnect so IAM is not re-triggered.
    */
   logLoginEvent?: boolean;
