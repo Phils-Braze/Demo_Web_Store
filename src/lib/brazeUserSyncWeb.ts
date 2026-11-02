@@ -1,3 +1,4 @@
+import { isGtmMode, gtmTrackCustomEvent } from "./gtm";
 import type { Card } from "@braze/web-sdk";
 import type { UserProfile } from "../context/ProfileContext";
 import type { Product } from "../types/product";
@@ -272,6 +273,11 @@ export async function logCheckoutPurchases(products: Product[]): Promise<void> {
 
 /** Log a custom event and flush (Content page demo actions, etc.). */
 export async function logBrazeCustomEvent(eventName: string): Promise<boolean> {
+  // GTM build: Braze SDK is bypassed; mirror the same event name to the dataLayer.
+  if (isGtmMode()) {
+    gtmTrackCustomEvent(eventName);
+    return true;
+  }
   const braze = await import("@braze/web-sdk");
   if (!braze.isInitialized?.()) return false;
   braze.logCustomEvent(eventName);
